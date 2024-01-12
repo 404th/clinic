@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/404th/clinic/internal/jwt"
@@ -84,6 +85,14 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
+	if resp.ID == "" {
+		helper.SendResponse(c, http.StatusInternalServerError, model.ErrorResponse{
+			Message: "user not found",
+			Data:    errors.New("user not found"),
+		})
+		return
+	}
+
 	refresh_token, err := jwt.CreateRefreshToken(&model.RefreshTokenData{
 		ID: resp.ID,
 	}, h.cfg.RefreshTokenSecret, h.cfg.RefreshTokenExpiryHour)
@@ -112,7 +121,7 @@ func (h *Handler) Login(c *gin.Context) {
 	resp.AccessToken = access_token
 
 	helper.SendResponse(c, http.StatusOK, model.SuccessResponse{
-		Message: "Successfully created",
+		Message: "Authorized",
 		Data:    resp,
 	})
 }

@@ -27,6 +27,7 @@ func NewService(cfg *config.Config, log *logrus.Logger, strg storage.StorageI) S
 
 type ServiceI interface {
 	UserService() UserServiceI
+	RoleService() RoleServiceI
 }
 
 type UserServiceI interface {
@@ -38,6 +39,14 @@ type UserServiceI interface {
 	TransferMoney(ctx context.Context, req *model.TransferMoneyRequest) (resp *model.IDTracker, err error)
 }
 
+type RoleServiceI interface {
+	CreateRole(ctx context.Context, req *model.CreateRoleRequest) (resp *model.IDTracker, err error)
+}
+
 func (sc *service) UserService() UserServiceI {
 	return sc.strg.UserStorage()
+}
+
+func (sc *service) RoleService() RoleServiceI {
+	return sc.strg.RoleStorage()
 }

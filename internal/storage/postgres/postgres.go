@@ -43,3 +43,7 @@ func (ps *postgres) CloseDB() {
 func (pb *postgres) UserStorage() storage.UserI {
 	return NewUser(pb.db)
 }
+
+func (pb *postgres) RoleStorage() storage.RoleI {
+	return NewRole(pb.db)
+}

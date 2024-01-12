@@ -8,6 +8,7 @@ import (
 
 type StorageI interface {
 	UserStorage() UserI
+	RoleStorage() RoleI
 }
 
 type UserI interface {
@@ -17,4 +18,8 @@ type UserI interface {
 	UpdateUser(ctx context.Context, req *model.UpdateUserRequest) (resp *model.IDTracker, err error)
 	DeleteUser(ctx context.Context, req *model.IDTracker) (err error)
 	TransferMoney(ctx context.Context, req *model.TransferMoneyRequest) (resp *model.IDTracker, err error)
+}
+
+type RoleI interface {
+	CreateRole(ctx context.Context, req *model.CreateRoleRequest) (resp *model.IDTracker, err error)
 }

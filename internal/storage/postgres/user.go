@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/404th/clinic/internal/storage"
 	"github.com/404th/clinic/model"
@@ -19,18 +21,20 @@ func NewUser(db *pgxpool.Pool) storage.UserI {
 	return &user{db}
 }
 
+var users_table_name string = "users"
+
 func (o *user) CreateUser(ctx context.Context, req *model.CreateUserRequest) (resp *model.IDTracker, err error) {
 	resp = &model.IDTracker{}
 
-	query := `
-		INSERT INTO "users" (
+	query := fmt.Sprintf(`
+		INSERT INTO %s (
 			role_id,
 			username,
 			firstname,
 			surname,
 			email,
 			password
-		) VALUE (
+		) VALUES (
 			$1,
 			$2,
 			$3,
@@ -38,7 +42,7 @@ func (o *user) CreateUser(ctx context.Context, req *model.CreateUserRequest) (re
 			$5,
 			$6
 		) RETURNING id
-	`
+	`, users_table_name)
 
 	var id_sql sql.NullString
 
@@ -78,6 +82,10 @@ func (o *user) Login(ctx context.Context, req *model.LoginRequest) (resp *model.
 	)
 
 	if err = o.db.QueryRow(ctx, query, req.Username).Scan(&id_sql, &password_sql); err != nil {
+		if strings.Contains(sql.ErrNoRows.Error(), err.Error()) {
+			return resp, nil
+		}
+
 		return resp, err
 	}
 
