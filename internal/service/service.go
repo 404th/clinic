@@ -28,19 +28,23 @@ func NewService(cfg *config.Config, log *logrus.Logger, strg storage.StorageI) S
 type ServiceI interface {
 	UserService() UserServiceI
 	RoleService() RoleServiceI
+	QueueService() QueueServiceI
 }
 
 type UserServiceI interface {
 	CreateUser(ctx context.Context, req *model.CreateUserRequest) (resp *model.IDTracker, err error)
 	Login(ctx context.Context, req *model.LoginRequest) (resp *model.LoginResponse, err error)
 	GetUserByID(ctx context.Context, req *model.IDTracker) (resp *model.User, err error)
-	UpdateUser(ctx context.Context, req *model.UpdateUserRequest) (resp *model.IDTracker, err error)
-	DeleteUser(ctx context.Context, req *model.IDTracker) (err error)
 	TransferMoney(ctx context.Context, req *model.TransferMoneyRequest) (resp *model.IDTracker, err error)
 }
 
 type RoleServiceI interface {
 	CreateRole(ctx context.Context, req *model.CreateRoleRequest) (resp *model.IDTracker, err error)
+}
+
+type QueueServiceI interface {
+	CreateQueue(ctx context.Context, req *model.CreateQueueRequest) (resp *model.IDTracker, err error)
+	MakePurchase(ctx context.Context, req *model.MakePurchaseRequest) (resp *model.IDTracker, err error)
 }
 
 func (sc *service) UserService() UserServiceI {
@@ -49,4 +53,8 @@ func (sc *service) UserService() UserServiceI {
 
 func (sc *service) RoleService() RoleServiceI {
 	return sc.strg.RoleStorage()
+}
+
+func (sc *service) QueueService() QueueServiceI {
+	return sc.strg.QueueStorage()
 }

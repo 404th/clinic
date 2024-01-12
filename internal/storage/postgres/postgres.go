@@ -47,3 +47,7 @@ func (pb *postgres) UserStorage() storage.UserI {
 func (pb *postgres) RoleStorage() storage.RoleI {
 	return NewRole(pb.db)
 }
+
+func (pb *postgres) QueueStorage() storage.QueueI {
+	return NewQueue(pb.db)
+}

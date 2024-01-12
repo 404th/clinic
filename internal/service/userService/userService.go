@@ -53,17 +53,29 @@ func (us *userService) Login(ctx context.Context, req *model.LoginRequest) (resp
 }
 
 func (us *userService) GetUserByID(ctx context.Context, req *model.IDTracker) (resp *model.User, err error) {
-	return resp, err
-}
+	resp = &model.User{}
 
-func (us *userService) UpdateUser(ctx context.Context, req *model.UpdateUserRequest) (resp *model.IDTracker, err error) {
-	return resp, err
-}
+	us.log.Infof("GetUserByID() => id: %s => req: %+v", req.ID, req)
+	resp, err = us.strg.GetUserByID(ctx, req)
+	if err != nil {
+		us.log.Errorf("GetUserByID() => id: %s => err: %+v", req.ID, err)
+		return resp, err
+	}
 
-func (us *userService) DeleteUser(ctx context.Context, req *model.IDTracker) (err error) {
-	return err
+	us.log.Infof("GetUserByID() => username: %s => resp: %+v", resp.Username, resp)
+	return resp, err
 }
 
 func (us *userService) TransferMoney(ctx context.Context, req *model.TransferMoneyRequest) (resp *model.IDTracker, err error) {
+	resp = &model.IDTracker{}
+
+	us.log.Infof("TransferMoney() => id: %s => req: %+v", req.ID, req)
+	resp, err = us.strg.TransferMoney(ctx, req)
+	if err != nil {
+		us.log.Errorf("TransferMoney() => id: %s => err: %+v", req.ID, err)
+		return resp, err
+	}
+
+	us.log.Infof("TransferMoney() => id: %s => resp: %+v", resp.ID, resp)
 	return resp, err
 }

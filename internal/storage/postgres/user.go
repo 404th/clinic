@@ -107,17 +107,96 @@ func (o *user) Login(ctx context.Context, req *model.LoginRequest) (resp *model.
 }
 
 func (o *user) GetUserByID(ctx context.Context, req *model.IDTracker) (resp *model.User, err error) {
-	return resp, err
-}
+	resp = &model.User{}
 
-func (o *user) UpdateUser(ctx context.Context, req *model.UpdateUserRequest) (resp *model.IDTracker, err error) {
-	return resp, err
-}
+	query := fmt.Sprintf(`
+		SELECT 
+			id,
+			role_id,
+			username,
+			firstname,
+			surname,
+			email,
+			wallet,
+			active
+		FROM 
+			%s 
+		WHERE deleted_at IS NULL AND id = $1
+	`, users_table_name)
 
-func (o *user) DeleteUser(ctx context.Context, req *model.IDTracker) (err error) {
-	return err
+	var usr model.User
+	var (
+		firstname_sql sql.NullString
+		surname_sql   sql.NullString
+		email_sql     sql.NullString
+		wallet_sql    sql.NullFloat64
+		active_sql    sql.NullInt16
+	)
+
+	if err = o.db.QueryRow(ctx, query, req.ID).Scan(
+		&usr.ID,
+		&usr.RoleID,
+		&usr.Username,
+		&firstname_sql,
+		&surname_sql,
+		&email_sql,
+		&wallet_sql,
+		&active_sql,
+	); err != nil {
+		if strings.Contains(sql.ErrNoRows.Error(), err.Error()) {
+			return resp, errors.New("user not found")
+		}
+		return resp, err
+	}
+
+	if firstname_sql.Valid {
+		usr.Firstname = firstname_sql.String
+	}
+
+	if surname_sql.Valid {
+		usr.Surname = surname_sql.String
+	}
+
+	if firstname_sql.Valid {
+		usr.Firstname = firstname_sql.String
+	}
+
+	if email_sql.Valid {
+		usr.Email = email_sql.String
+	}
+
+	if wallet_sql.Valid {
+		usr.Wallet = wallet_sql.Float64
+	}
+
+	if active_sql.Valid {
+		usr.Active = int(active_sql.Int16)
+	}
+
+	resp = &usr
+
+	return resp, nil
 }
 
 func (o *user) TransferMoney(ctx context.Context, req *model.TransferMoneyRequest) (resp *model.IDTracker, err error) {
+	resp = &model.IDTracker{}
+
+	query := fmt.Sprintf(`
+		UPDATE %s 
+		SET wallet = wallet + $1 
+		WHERE id = $2
+	`, users_table_name)
+
+	r, err := o.db.Exec(ctx, query, req.Value, req.ID)
+	if err != nil {
+		return resp, err
+	}
+
+	if r.RowsAffected() <= 0 {
+		return resp, errors.New("not updated")
+	}
+
+	resp.ID = req.ID
+
 	return resp, err
 }

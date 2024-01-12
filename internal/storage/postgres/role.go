@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	role_table_name string = "roles"
+	roles_table_name string = "roles"
 )
 
 type role struct {
@@ -29,17 +29,19 @@ func (r *role) CreateRole(ctx context.Context, req *model.CreateRoleRequest) (re
 
 	query := fmt.Sprintf(`
 		INSERT INTO %s (
-			rolename 
+			rolename,
+			price  
 		) VALUES (
-			$1
+			$1,
+			$2
 		) RETURNING id
-	`, role_table_name)
+	`, roles_table_name)
 
 	var (
 		id sql.NullString
 	)
 
-	if err = r.db.QueryRow(ctx, query, req.Rolename).Scan(&id); err != nil {
+	if err = r.db.QueryRow(ctx, query, req.Rolename, req.Price).Scan(&id); err != nil {
 		return resp, err
 	}
 

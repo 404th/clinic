@@ -13,20 +13,25 @@ func Run(cfg *config.Config, h *handler.Handler) *gin.Engine {
 	r.POST("/user", h.CreateUser)
 	r.POST("/role", h.CreateRole)
 	r.POST("/login", h.Login)
-	usr := r.Group("/user", middleware.JwtAuthMiddleware(cfg.AccessTokenSecret))
+	r.POST("/refresh-token", h.RefreshToken)
+
+	user := r.Group("/user", middleware.JwtAuthMiddleware(cfg.AccessTokenSecret))
 	{
-		usr.GET("/:id", h.GetUserByID)
-		usr.PUT("/", h.UpdateUser)
-		usr.PATCH("/", h.TransferMoney)
-		usr.DELETE("/", h.DeleteUser)
+		user.GET("/:id", h.GetUserByID)
+		user.PATCH("/", h.TransferMoney)
+		user.PUT("/transfer", h.TransferMoney)
 	}
 
-	rl := r.Group("/role", middleware.JwtAuthMiddleware(cfg.AccessTokenSecret))
+	role := r.Group("/role", middleware.JwtAuthMiddleware(cfg.AccessTokenSecret))
 	{
-		rl.GET("/:id")
-		rl.PUT("/")
-		rl.PATCH("/")
-		rl.DELETE("/")
+		role.GET("/:id")
+	}
+
+	queue := r.Group("/queue", middleware.JwtAuthMiddleware(cfg.AccessTokenSecret))
+	{
+		queue.POST("/", h.CreateQueue)
+		queue.GET("/:id")
+		queue.PATCH("/", h.MakePurchase)
 	}
 
 	return r

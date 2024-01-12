@@ -104,8 +104,6 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("refresh_token", refresh_token, h.cfg.RefreshTokenExpiryHour, "", "*", true, false)
-
 	access_token, err := jwt.CreateAccessToken(&model.AccessTokenData{
 		ID:       resp.ID,
 		Username: data.Username,
@@ -119,6 +117,7 @@ func (h *Handler) Login(c *gin.Context) {
 	}
 
 	resp.AccessToken = access_token
+	resp.RefreshToken = refresh_token
 
 	helper.SendResponse(c, http.StatusOK, model.SuccessResponse{
 		Message: "Authorized",
@@ -149,16 +148,111 @@ func (h *Handler) GetUserByID(c *gin.Context) {
 	}
 
 	helper.SendResponse(c, http.StatusOK, model.SuccessResponse{
-		Message: "Successfully created",
+		Message: "OK",
 		Data:    usr,
 	})
 }
 
-func (h *Handler) UpdateUser(c *gin.Context) {
-}
-
-func (h *Handler) DeleteUser(c *gin.Context) {
-}
-
 func (h *Handler) TransferMoney(c *gin.Context) {
+	var data model.TransferMoneyRequest
+	if err := c.ShouldBindJSON(&data); err != nil {
+		helper.SendResponse(c, http.StatusBadRequest, model.ErrorResponse{
+			Message: "invalid arguments",
+			Data:    err.Error(),
+		})
+		return
+	}
+
+	// ...1: getting id from url param
+	if data.ID == "" {
+		helper.SendResponse(c, http.StatusBadRequest, model.ErrorResponse{
+			Message: "id is required",
+			Data:    nil,
+		})
+		return
+	}
+
+	if _, err := uuid.Parse(data.ID); err != nil {
+		helper.SendResponse(c, http.StatusBadRequest, model.ErrorResponse{
+			Message: "id is invalid",
+			Data:    nil,
+		})
+		return
+	}
+
+	resp, err := h.service.UserService().TransferMoney(c.Request.Context(), &data)
+	if err != nil {
+		helper.SendResponse(c, http.StatusInternalServerError, model.ErrorResponse{
+			Message: "some error happened",
+			Data:    err.Error(),
+		})
+		return
+	}
+
+	helper.SendResponse(c, http.StatusOK, model.SuccessResponse{
+		Message: "OK",
+		Data:    resp,
+	})
+}
+
+func (h *Handler) RefreshToken(c *gin.Context) {
+	var request model.RefreshTokenRequest
+
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		helper.SendResponse(c, http.StatusBadRequest, model.ErrorResponse{
+			Message: "Invalid arguments",
+			Data:    err,
+		})
+		return
+	}
+
+	id, err := jwt.ExtractIDFromToken(request.RefreshToken, h.cfg.RefreshTokenSecret)
+	if err != nil {
+		helper.SendResponse(c, http.StatusBadRequest, model.ErrorResponse{
+			Message: "Invalid token",
+			Data:    err,
+		})
+		return
+	}
+
+	user, err := h.service.UserService().GetUserByID(c, &model.IDTracker{ID: id})
+	if err != nil {
+		helper.SendResponse(c, http.StatusBadRequest, model.ErrorResponse{
+			Message: err.Error(),
+			Data:    nil,
+		})
+		return
+	}
+
+	accessToken, err := jwt.CreateAccessToken(&model.AccessTokenData{
+		Username: user.Username,
+		ID:       user.ID,
+	}, h.cfg.AccessTokenSecret, h.cfg.AccessTokenExpiryHour)
+	if err != nil {
+		helper.SendResponse(c, http.StatusBadRequest, model.ErrorResponse{
+			Message: err.Error(),
+			Data:    nil,
+		})
+		return
+	}
+
+	refreshToken, err := jwt.CreateRefreshToken(&model.RefreshTokenData{ID: user.ID}, h.cfg.RefreshTokenSecret, h.cfg.RefreshTokenExpiryHour)
+	if err != nil {
+		helper.SendResponse(c, http.StatusBadRequest, model.ErrorResponse{
+			Message: "ID is invalid",
+			Data:    nil,
+		})
+		return
+	}
+
+	refreshTokenResponse := model.RefreshTokenResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
+
+	helper.SendResponse(c, http.StatusOK, model.SuccessResponse{
+		Message: "Successfully created",
+		Data:    refreshTokenResponse,
+	})
 }
