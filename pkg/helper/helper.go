@@ -12,4 +12,5 @@ func SendResponse(c *gin.Context, s int, data interface{}) {
 		c.IndentedJSON(s, data)
 		return
 	}
+	return
 }

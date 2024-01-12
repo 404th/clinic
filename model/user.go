@@ -24,15 +24,13 @@ type CreateUserRequest struct {
 }
 
 type LoginRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }
 
 type LoginResponse struct {
-	ID           string `json:"id"`
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	ID          string `json:"id"`
+	AccessToken string `json:"access_token"`
 }
 
 type UpdateUserRequest struct {

@@ -14,6 +14,7 @@ func Run(cfg *config.Config, h *handler.Handler) *gin.Engine {
 	r.POST("/user", h.Login)
 	usr := r.Group("/user", middleware.JwtAuthMiddleware(cfg.AccessTokenSecret))
 	{
+		usr.GET("/:id", h.GetUserByID)
 		usr.PUT("/", h.UpdateUser)
 		usr.PATCH("/", h.TransferMoney)
 		usr.DELETE("/", h.DeleteUser)

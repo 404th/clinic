@@ -41,6 +41,14 @@ func (us *userService) CreateUser(ctx context.Context, req *model.CreateUserRequ
 func (us *userService) Login(ctx context.Context, req *model.LoginRequest) (resp *model.LoginResponse, err error) {
 	resp = &model.LoginResponse{}
 
+	us.log.Infof("Login() => username: %s => req: %+v", req.Username, req)
+	resp, err = us.strg.Login(ctx, req)
+	if err != nil {
+		us.log.Errorf("Login() => username: %s => err: %+v", req.Username, err)
+		return resp, err
+	}
+
+	us.log.Infof("Login() => username: %s => resp: %+v", req.Username, req)
 	return resp, err
 }
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/404th/clinic/internal/storage"
 	"github.com/404th/clinic/model"
+	"github.com/404th/clinic/pkg/util"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -63,23 +64,36 @@ func (o *user) Login(ctx context.Context, req *model.LoginRequest) (resp *model.
 	resp = &model.LoginResponse{}
 
 	var (
-		filter = ` WHERE deleted_at IS NULL`
+		filter = ` WHERE deleted_at IS NULL AND username=$1`
 		query  = `SELECT id, password FROM "users" `
 	)
 
-	if req.Email == "" && req.Username == "" {
-		return resp, errors.New("email or username are required")
+	query += filter
+
+	var (
+		id_sql       sql.NullString
+		password_sql sql.NullString
+		id           string
+		password     string
+	)
+
+	if err = o.db.QueryRow(ctx, query, req.Username).Scan(&id_sql, &password_sql); err != nil {
+		return resp, err
 	}
 
-	if req.Email != "" {
-		filter += " AND email=$1"
+	if id_sql.Valid {
+		id = id_sql.String
 	}
 
-	if req.Username != "" {
-		filter += " AND username=$1"
+	if password_sql.Valid {
+		password = password_sql.String
 	}
 
-	o.db.QueryRow(ctx, query)
+	if !util.CheckPasswordHash(req.Password, password) {
+		return resp, errors.New("invalid password")
+	}
+
+	resp.ID = id
 
 	return resp, err
 }
