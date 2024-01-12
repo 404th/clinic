@@ -18,6 +18,11 @@ type Config struct {
 	PostgresPassword   string
 	PostgresUser       string
 	PoolMaxConnections int
+
+	AccessTokenExpiryHour  int
+	RefreshTokenExpiryHour int
+	AccessTokenSecret      string
+	RefreshTokenSecret     string
 }
 
 func GetConfig() (*Config, error) {
@@ -37,6 +42,11 @@ func GetConfig() (*Config, error) {
 	cfg.PostgresPassword = cast.ToString(getEnvOrReturnDefaultValue("PostgresPassword", "postgres"))
 	cfg.PostgresUser = cast.ToString(getEnvOrReturnDefaultValue("PostgresUser", "postgres"))
 	cfg.PoolMaxConnections = cast.ToInt(getEnvOrReturnDefaultValue("PoolMaxConnections", 60))
+
+	cfg.AccessTokenExpiryHour = cast.ToInt(getEnvOrReturnDefaultValue("AccessTokenExpiryHour", 0.25))
+	cfg.RefreshTokenExpiryHour = cast.ToInt(getEnvOrReturnDefaultValue("RefreshTokenExpiryHour", 24))
+	cfg.AccessTokenSecret = cast.ToString(getEnvOrReturnDefaultValue("AccessTokenSecret", "secret%$^GEF$#F#$F#4"))
+	cfg.RefreshTokenSecret = cast.ToString(getEnvOrReturnDefaultValue("RefreshTokenSecret", "secret#$%@#$@#$@#$#@$"))
 
 	return cfg, nil
 }
