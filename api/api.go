@@ -36,8 +36,8 @@ func Run(cfg *config.Config, h *handler.Handler) *gin.Engine {
 	{
 		user.GET("/:id", h.GetUserByID)
 		user.GET("/", h.GetAllUsers)
-		user.PATCH("/", h.TransferMoney)
-		user.PUT("/transfer", h.TransferMoney)
+		user.PATCH("/transfer", h.TransferMoney)
+		// user.PUT("/transfer", h.TransferMoney)
 	}
 
 	role := r.Group("/role", middleware.JwtAuthMiddleware(cfg.AccessTokenSecret))
