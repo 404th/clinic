@@ -66,6 +66,20 @@ func (us *userService) GetUserByID(ctx context.Context, req *model.IDTracker) (r
 	return resp, err
 }
 
+func (us *userService) GetAllUsers(ctx context.Context, req *model.GetAllUsersRequest) (resp *model.GetAllUsersResponse, err error) {
+	resp = &model.GetAllUsersResponse{}
+
+	us.log.Infof("GetAllUsers() => page: %d => req: %+v", req.Page, req)
+	resp, err = us.strg.GetAllUsers(ctx, req)
+	if err != nil {
+		us.log.Errorf("GetAllUsers() => page: %d => err: %+v", req.Page, err)
+		return resp, err
+	}
+
+	us.log.Infof("GetAllUsers() => metadata: %+v => resp: %+v", resp.Metadata, resp)
+	return resp, err
+}
+
 func (us *userService) TransferMoney(ctx context.Context, req *model.TransferMoneyRequest) (resp *model.IDTracker, err error) {
 	resp = &model.IDTracker{}
 

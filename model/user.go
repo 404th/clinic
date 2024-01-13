@@ -38,3 +38,13 @@ type TransferMoneyRequest struct {
 	ID    string  `json:"id" binding:"required"`
 	Value float64 `json:"value" binding:"required"`
 }
+
+type GetAllUsersRequest struct {
+	Limit int32 `json:"limit"`
+	Page  int32 `json:"page"`
+}
+
+type GetAllUsersResponse struct {
+	Metadata Metadata `json:"metadata"`
+	Users    []User   `json:"users"`
+}

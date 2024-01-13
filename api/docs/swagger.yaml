@@ -44,6 +44,33 @@ definitions:
       message:
         type: string
     type: object
+  model.GetAllQueuesResponse:
+    properties:
+      metadata:
+        $ref: '#/definitions/model.Metadata'
+      queues:
+        items:
+          $ref: '#/definitions/model.Queue'
+        type: array
+    type: object
+  model.GetAllRolesResponse:
+    properties:
+      metadata:
+        $ref: '#/definitions/model.Metadata'
+      roles:
+        items:
+          $ref: '#/definitions/model.Role'
+        type: array
+    type: object
+  model.GetAllUsersResponse:
+    properties:
+      metadata:
+        $ref: '#/definitions/model.Metadata'
+      users:
+        items:
+          $ref: '#/definitions/model.User'
+        type: array
+    type: object
   model.IDTracker:
     properties:
       id:
@@ -78,6 +105,30 @@ definitions:
     - amount
     - queue_id
     type: object
+  model.Metadata:
+    properties:
+      count:
+        type: integer
+      limit:
+        type: integer
+      page:
+        type: integer
+    type: object
+  model.Queue:
+    properties:
+      customer_id:
+        type: string
+      id:
+        type: string
+      paid_money:
+        type: number
+      payment_status:
+        type: integer
+      queue_number:
+        type: integer
+      recipient_id:
+        type: string
+    type: object
   model.RefreshTokenRequest:
     properties:
       refresh_token:
@@ -88,6 +139,23 @@ definitions:
       access_token:
         type: string
       refresh_token:
+        type: string
+    type: object
+  model.Role:
+    properties:
+      active:
+        type: integer
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      id:
+        type: string
+      price:
+        type: number
+      role_name:
+        type: string
+      updated_at:
         type: string
     type: object
   model.SuccessResponse:
@@ -187,6 +255,55 @@ paths:
       tags:
       - user
   /queue:
+    get:
+      consumes:
+      - application/json
+      description: get_all_queues
+      operationId: get_all_queues
+      parameters:
+      - description: limit
+        in: query
+        name: limit
+        type: string
+      - description: page
+        in: query
+        name: page
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: body
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.GetAllQueuesResponse'
+              type: object
+        "400":
+          description: Invalid Argument
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.ErrorResponse'
+            - properties:
+                message:
+                  type: string
+              type: object
+        "500":
+          description: Server Error
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.ErrorResponse'
+            - properties:
+                message:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: get_all_queues
+      tags:
+      - queue
     patch:
       consumes:
       - application/json
@@ -330,6 +447,55 @@ paths:
       tags:
       - user
   /role:
+    get:
+      consumes:
+      - application/json
+      description: get_all_roles
+      operationId: get_all_roles
+      parameters:
+      - description: limit
+        in: query
+        name: limit
+        type: string
+      - description: page
+        in: query
+        name: page
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: body
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.GetAllRolesResponse'
+              type: object
+        "400":
+          description: Invalid Argument
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.ErrorResponse'
+            - properties:
+                message:
+                  type: string
+              type: object
+        "500":
+          description: Server Error
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.ErrorResponse'
+            - properties:
+                message:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: get_all_roles
+      tags:
+      - role
     post:
       consumes:
       - application/json
@@ -376,6 +542,55 @@ paths:
       tags:
       - role
   /user:
+    get:
+      consumes:
+      - application/json
+      description: get_all_users
+      operationId: get_all_users
+      parameters:
+      - description: limit
+        in: query
+        name: limit
+        type: string
+      - description: page
+        in: query
+        name: page
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: body
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.GetAllUsersResponse'
+              type: object
+        "400":
+          description: Invalid Argument
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.ErrorResponse'
+            - properties:
+                message:
+                  type: string
+              type: object
+        "500":
+          description: Server Error
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.ErrorResponse'
+            - properties:
+                message:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: get_all_users
+      tags:
+      - user
     post:
       consumes:
       - application/json
@@ -463,11 +678,13 @@ paths:
                 message:
                   type: string
               type: object
+      security:
+      - ApiKeyAuth: []
       summary: get_user_by_id
       tags:
       - user
   /user/transfer:
-    put:
+    patch:
       consumes:
       - application/json
       description: transfer

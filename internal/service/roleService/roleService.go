@@ -37,3 +37,17 @@ func (us *userService) CreateRole(ctx context.Context, req *model.CreateRoleRequ
 	us.log.Infof("CreateRole() => rolename: %s => resp: %+v", req.Rolename, req)
 	return resp, err
 }
+
+func (us *userService) GetAllRoles(ctx context.Context, req *model.GetAllRolesRequest) (resp *model.GetAllRolesResponse, err error) {
+	resp = &model.GetAllRolesResponse{}
+
+	us.log.Infof("GetAllRoles() => page: %d => req: %+v", req.Page, req)
+	resp, err = us.strg.GetAllRoles(ctx, req)
+	if err != nil {
+		us.log.Errorf("GetAllRoles() => page: %d => err: %+v", req.Page, err)
+		return resp, err
+	}
+
+	us.log.Infof("GetAllRoles() => metadata: %+v => resp: %+v", resp.Metadata, resp)
+	return resp, err
+}

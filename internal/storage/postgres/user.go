@@ -176,6 +176,101 @@ func (o *user) GetUserByID(ctx context.Context, req *model.IDTracker) (resp *mod
 	return resp, nil
 }
 
+func (o *user) GetAllUsers(ctx context.Context, req *model.GetAllUsersRequest) (resp *model.GetAllUsersResponse, err error) {
+	resp = &model.GetAllUsersResponse{}
+
+	var (
+		offset int32
+	)
+
+	offset = (req.Page - 1) * req.Limit
+
+	query := fmt.Sprintf(`
+		SELECT 
+			id,
+			role_id,
+			username,
+			firstname,
+			surname,
+			email,
+			wallet,
+			active  
+		FROM 
+			%s 
+		WHERE deleted_at IS NULL 
+		ORDER BY updated_at DESC
+		LIMIT $1 OFFSET $2 
+	`, users_table_name)
+
+	rows, err := o.db.Query(ctx, query, req.Limit, offset)
+	if err != nil {
+		return resp, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var user model.User
+		var (
+			firstname_sql sql.NullString
+			surname_sql   sql.NullString
+			email_sql     sql.NullString
+			wallet_sql    sql.NullFloat64
+			active_sql    sql.NullInt16
+		)
+
+		if err = rows.Scan(
+			&user.ID,
+			&user.RoleID,
+			&user.Username,
+			&firstname_sql,
+			&surname_sql,
+			&email_sql,
+			&wallet_sql,
+			&active_sql,
+		); err != nil {
+			return resp, err
+		}
+
+		if firstname_sql.Valid {
+			user.Firstname = firstname_sql.String
+		}
+
+		if surname_sql.Valid {
+			user.Surname = surname_sql.String
+		}
+
+		if email_sql.Valid {
+			user.Email = email_sql.String
+		}
+
+		if wallet_sql.Valid {
+			user.Wallet = wallet_sql.Float64
+		}
+
+		if active_sql.Valid {
+			user.Active = int(active_sql.Int16)
+		}
+
+		resp.Users = append(resp.Users, user)
+	}
+
+	count_query := fmt.Sprintf(`
+		SELECT COUNT(*) as count FROM %s WHERE deleted_at IS NULL 
+	`, users_table_name)
+
+	var count int
+
+	if err = o.db.QueryRow(ctx, count_query).Scan(&count); err != nil {
+		return resp, err
+	}
+
+	resp.Metadata.Count = count
+	resp.Metadata.Limit = req.Limit
+	resp.Metadata.Page = req.Page
+
+	return resp, err
+}
+
 func (o *user) TransferMoney(ctx context.Context, req *model.TransferMoneyRequest) (resp *model.IDTracker, err error) {
 	resp = &model.IDTracker{}
 

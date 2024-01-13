@@ -14,3 +14,13 @@ type CreateRoleRequest struct {
 	Rolename string  `json:"rolename"`
 	Price    float64 `json:"price"`
 }
+
+type GetAllRolesRequest struct {
+	Limit int32 `json:"limit"`
+	Page  int32 `json:"page"`
+}
+
+type GetAllRolesResponse struct {
+	Metadata Metadata `json:"metadata"`
+	Roles    []Role   `json:"roles"`
+}

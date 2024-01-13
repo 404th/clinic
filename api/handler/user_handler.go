@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/404th/clinic/internal/jwt"
 	"github.com/404th/clinic/model"
@@ -151,6 +152,7 @@ func (h *Handler) Login(c *gin.Context) {
 
 // GetUserByID
 // @ID				get_user_by_id
+// @Security		ApiKeyAuth
 // @Router			/user/{id} [GET]
 // @Summary			get_user_by_id
 // @Description		get_user_by_id
@@ -189,10 +191,73 @@ func (h *Handler) GetUserByID(c *gin.Context) {
 	})
 }
 
+// Get All Users
+// @ID				get_all_users
+// @Security		ApiKeyAuth
+// @Router			/user [GET]
+// @Summary			get_all_users
+// @Description		get_all_users
+// @Tags			user
+// @Accept			json
+// @Produce			json
+// @Param     	 	limit   query	    string	  										false	"limit"
+// @Param        	page    query     	string  										false  	"page"
+// @Success			200		{object}	model.SuccessResponse{data=model.GetAllUsersResponse}	"body"
+// @Response		400		{object}	model.ErrorResponse{message=string}						"Invalid Argument"
+// @Failure			500		{object}	model.ErrorResponse{message=string}						"Server Error"
+func (h *Handler) GetAllUsers(c *gin.Context) {
+	var data model.GetAllUsersRequest
+
+	limit_str := c.Query("limit")
+	if limit_str != "" {
+		limit, err := strconv.Atoi(limit_str)
+		if err != nil {
+			helper.SendResponse(c, http.StatusBadRequest, model.ErrorResponse{
+				Message: "limit is not valid",
+				Data:    err,
+			})
+			return
+		}
+		data.Limit = int32(limit)
+	} else {
+		data.Limit = int32(10)
+	}
+
+	page_str := c.Query("page")
+	if page_str != "" {
+		page, err := strconv.Atoi(page_str)
+		if err != nil {
+			helper.SendResponse(c, http.StatusBadRequest, model.ErrorResponse{
+				Message: "page is not valid",
+				Data:    err,
+			})
+			return
+		}
+		data.Page = int32(page)
+	} else {
+		data.Page = int32(1)
+	}
+
+	resp, err := h.service.UserService().GetAllUsers(c.Request.Context(), &data)
+	if err != nil {
+		helper.SendResponse(c, http.StatusInternalServerError, model.ErrorResponse{
+			Message: "error happened",
+			Data:    err.Error(),
+		})
+		return
+	}
+
+	helper.SendResponse(c, http.StatusOK, model.SuccessResponse{
+		Message: "OK",
+		Data:    resp,
+	})
+	return
+}
+
 // TransferMoney
 // @ID				transfer
 // @Security		ApiKeyAuth
-// @Router			/user/transfer [PUT]
+// @Router			/user/transfer [PATCH]
 // @Summary			transfer
 // @Description		transfer
 // @Tags			user

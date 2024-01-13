@@ -51,3 +51,17 @@ func (qs *queueService) MakePurchase(ctx context.Context, req *model.MakePurchas
 	qs.log.Infof("MakePurchase() => id: %s => resp: %+v", resp.ID, resp)
 	return resp, err
 }
+
+func (qs *queueService) GetAllQueues(ctx context.Context, req *model.GetAllQueuesRequest) (resp *model.GetAllQueuesResponse, err error) {
+	resp = &model.GetAllQueuesResponse{}
+
+	qs.log.Infof("GetAllQueues() => page: %d => req: %+v", req.Page, req)
+	resp, err = qs.strg.GetAllQueues(ctx, req)
+	if err != nil {
+		qs.log.Errorf("GetAllQueues() => page: %d => err: %+v", req.Page, err)
+		return resp, err
+	}
+
+	qs.log.Infof("GetAllQueues() => metadata: %+v => resp: %+v", resp.Metadata, resp)
+	return resp, err
+}

@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -153,6 +154,87 @@ func (q *queue) MakePurchase(ctx context.Context, req *model.MakePurchaseRequest
 		_ = tx.Rollback(ctx)
 		return resp, err
 	}
+
+	return resp, err
+}
+
+func (q *queue) GetAllQueues(ctx context.Context, req *model.GetAllQueuesRequest) (resp *model.GetAllQueuesResponse, err error) {
+	resp = &model.GetAllQueuesResponse{}
+
+	var (
+		offset int32
+	)
+
+	offset = (req.Page - 1) * req.Limit
+
+	query := fmt.Sprintf(`
+		SELECT 
+			id,
+			recipient_id,
+			customer_id,
+			paid_money,
+			queue_number,
+			payment_status 
+		FROM 
+			%s 
+		WHERE deleted_at IS NULL 
+		ORDER BY updated_at DESC 
+		LIMIT $1 OFFSET $2 
+	`, queues_table_name)
+
+	rows, err := q.db.Query(ctx, query, req.Limit, offset)
+	if err != nil {
+		return resp, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var queue model.Queue
+		var (
+			paid_money_sql     sql.NullFloat64
+			queue_number_sql   sql.NullInt32
+			payment_status_sql sql.NullInt32
+		)
+
+		if err = rows.Scan(
+			&queue.ID,
+			&queue.RecipientID,
+			&queue.CustomerID,
+			&paid_money_sql,
+			&queue_number_sql,
+			&payment_status_sql,
+		); err != nil {
+			return resp, err
+		}
+
+		if paid_money_sql.Valid {
+			queue.PaidMoney = paid_money_sql.Float64
+		}
+
+		if queue_number_sql.Valid {
+			queue.QueueNumber = int(queue_number_sql.Int32)
+		}
+
+		if payment_status_sql.Valid {
+			queue.PaymentStatus = int(payment_status_sql.Int32)
+		}
+
+		resp.Queues = append(resp.Queues, queue)
+	}
+
+	count_query := fmt.Sprintf(`
+		SELECT COUNT(*) as count FROM %s WHERE deleted_at IS NULL 
+	`, queues_table_name)
+
+	var count int
+
+	if err = q.db.QueryRow(ctx, count_query).Scan(&count); err != nil {
+		return resp, err
+	}
+
+	resp.Metadata.Count = count
+	resp.Metadata.Limit = req.Limit
+	resp.Metadata.Page = req.Page
 
 	return resp, err
 }
