@@ -29,6 +29,10 @@ Install swaggo:
 ```
 go get -u github.com/swaggo/swag 
 ```
+!If this is not running or returning error, make sure your GO Path is on the PATH environment variable: 
+```
+export PATH=$(go env GOPATH)/bin:$PATH 
+```
 
 Then, database should be created in docker container. To build db in container built-in commands are written in Makefile. We should run the command step-by-step:
 
