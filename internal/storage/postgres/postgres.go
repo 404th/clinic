@@ -13,6 +13,12 @@ type postgres struct {
 	db *pgxpool.Pool
 }
 
+var (
+	queues_table_name string = "queues"
+	roles_table_name  string = "roles"
+	users_table_name  string = "users"
+)
+
 // postgres://jack:secret@pg.example.com:5432/mydb?sslmode=verify-ca&pool_max_conns=10
 func NewPostgres(cfg *config.Config) (resp storage.StorageI, err error) {
 	pool, err := pgxpool.Connect(context.Background(), fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable&pool_max_conns=%d",

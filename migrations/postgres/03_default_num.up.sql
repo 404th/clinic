@@ -1,0 +1,3 @@
+ALTER TABLE queues 
+ALTER COLUMN queue_number 
+SET DEFAULT 0;

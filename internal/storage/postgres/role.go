@@ -10,10 +10,6 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-var (
-	roles_table_name string = "roles"
-)
-
 type role struct {
 	db *pgxpool.Pool
 }

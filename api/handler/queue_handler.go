@@ -8,6 +8,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Create CreateQueue
+// @ID				create_queue
+// @Security		ApiKeyAuth
+// @Router			/queue [POST]
+// @Summary			create queue
+// @Description		create queue
+// @Tags			queue
+// @Accept			json
+// @Produce			json
+// @Param			data	body		model.CreateQueueRequest						true	"data"
+// @Success			200		{object}	model.SuccessResponse{data=model.IDTracker}				"body"
+// @Response		400		{object}	model.ErrorResponse{message=string}						"Invalid Argument"
+// @Failure			500		{object}	model.ErrorResponse{message=string}						"Server Error"
 func (h *Handler) CreateQueue(c *gin.Context) {
 	var data model.CreateQueueRequest
 
@@ -34,6 +47,19 @@ func (h *Handler) CreateQueue(c *gin.Context) {
 	})
 }
 
+// Create MakePurchase
+// @ID				make_purchase
+// @Security		ApiKeyAuth
+// @Router			/queue [PATCH]
+// @Summary			make purchase
+// @Description		make purchase
+// @Tags			queue
+// @Accept			json
+// @Produce			json
+// @Param			data	body		model.MakePurchaseRequest						true	"data"
+// @Success			200		{object}	model.SuccessResponse{data=model.IDTracker}				"body"
+// @Response		400		{object}	model.ErrorResponse{message=string}						"Invalid Argument"
+// @Failure			500		{object}	model.ErrorResponse{message=string}						"Server Error"
 func (h *Handler) MakePurchase(c *gin.Context) {
 	var data model.MakePurchaseRequest
 

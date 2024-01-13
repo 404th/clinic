@@ -20,8 +20,6 @@ func NewQueue(db *pgxpool.Pool) storage.QueueI {
 	}
 }
 
-var queues_table_name string = "queues"
-
 func (q *queue) CreateQueue(ctx context.Context, req *model.CreateQueueRequest) (resp *model.IDTracker, err error) {
 	resp = &model.IDTracker{}
 
@@ -53,23 +51,19 @@ func (q *queue) MakePurchase(ctx context.Context, req *model.MakePurchaseRequest
 		return resp, err
 	}
 
-	// "users" table have id role_id, wallet.
-	// "roles" table have id, price.
-	// "queues" table have id, paid_money, recipient_id, customer_id, payment_status.
-	// (queues.recipient_id and queues.customer_id are related to users.id),
-	// (users.role_id is related to roles.id)
-
-	// two arguments are given from me: queue.id and value.
-	// you should write query:
-	// 1.  distract value from user's wallet which is related to the queue's customer_id with id if value is not higher than value of wallet field.
-	// 2. add value to user's wallet which is related to the queue's recipient_id with id if value is not higher than user's wallet which is related to the queue's customer_id with id.
-	// 3. add value to queue's paid_money field if value is not higher than user's wallet which is related to the queue's customer_id with id.
-	// 4. after addition to paid_money, if queues' paid_money is higher or equal to role of recipient's price, then make queues' 'payment_status' field 1 else do nothing and if value is not higher than user's wallet which is related to the queue's customer_id with id.
 	q1 := `
-		
-	  `
+		UPDATE users 
+		SET wallet = wallet - $1 
+		FROM queues 
+		WHERE 
+			users.deleted_at IS NULL AND 
+			wallet > $1 AND 
+			queues.id = $2 AND 
+			queues.customer_id = users.id AND 
+			payment_status = 0
+	`
 
-	r1, err := tx.Exec(ctx, q1, req.QueueID, req.Amount)
+	r1, err := tx.Exec(ctx, q1, req.Amount, req.QueueID)
 	if err != nil {
 		return resp, err
 	}
@@ -78,8 +72,87 @@ func (q *queue) MakePurchase(ctx context.Context, req *model.MakePurchaseRequest
 		return resp, errors.New("payment not accepted")
 	}
 
+	q2 := `
+		UPDATE users  
+		SET wallet = wallet + $1 
+		FROM queues 
+		WHERE 
+			queues.recipient_id = users.id AND 
+			users.deleted_at IS NULL AND
+			queues.deleted_at IS NULL AND 
+			queues.id = $2 AND 
+			payment_status = 0
+	`
+
+	r2, err := tx.Exec(ctx, q2, req.Amount, req.QueueID)
+	if err != nil {
+		return resp, err
+	}
+	if r2.RowsAffected() <= 0 {
+		_ = tx.Rollback(ctx)
+		return resp, errors.New("payment not accepted")
+	}
+
+	q3 := `
+		UPDATE queues  
+		SET paid_money = paid_money + $1
+		WHERE queues.deleted_at IS NULL AND queues.id = $2 AND 
+		payment_status = 0
+	`
+
+	r3, err := tx.Exec(ctx, q3, req.Amount, req.QueueID)
+	if err != nil {
+		return resp, err
+	}
+	if r3.RowsAffected() <= 0 {
+		_ = tx.Rollback(ctx)
+		return resp, errors.New("payment not accepted")
+	}
+
+	q4 := `
+		UPDATE queues 
+		SET 
+			payment_status = CASE 
+								WHEN paid_money >= subquery.role_price THEN 1
+								ELSE 0
+							END,
+			queue_number = CASE 
+							WHEN paid_money >= subquery.role_price THEN subquery.max_queue_number + 1 
+							ELSE 0
+						END
+		FROM (
+			SELECT 
+				queues.recipient_id,
+				MAX(queues.queue_number) as max_queue_number,
+				roles.price as role_price
+			FROM queues
+			JOIN users ON users.id = queues.recipient_id
+			JOIN roles ON roles.id = users.role_id
+			WHERE queues.paid_money >= roles.price
+			GROUP BY queues.recipient_id, roles.price
+		) AS subquery
+		WHERE 
+			queues.recipient_id = subquery.recipient_id 
+			AND queues.id = $1 
+			AND queues.deleted_at IS NULL 
+			AND payment_status = 0	
+	`
+
+	r4, err := tx.Exec(ctx, q4, req.QueueID)
+	if err != nil {
+		return resp, err
+	}
+	if r4.RowsAffected() <= 0 {
+		_ = tx.Rollback(ctx)
+		return resp, errors.New("payment not accepted")
+	}
+
 	resp.ID = req.QueueID
 
-	tx.Commit(ctx)
+	if err = tx.Commit(ctx); err != nil {
+		_ = tx.Rollback(ctx)
+		return resp, err
+	}
+
 	return resp, err
 }

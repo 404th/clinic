@@ -19,6 +19,8 @@ type Config struct {
 	PostgresUser       string
 	PoolMaxConnections int
 
+	DockerPostgresContainerName string
+
 	AccessTokenExpiryHour  int
 	RefreshTokenExpiryHour int
 	AccessTokenSecret      string
@@ -42,6 +44,8 @@ func GetConfig() (*Config, error) {
 	cfg.PostgresPassword = cast.ToString(getEnvOrReturnDefaultValue("PostgresPassword", "postgres"))
 	cfg.PostgresUser = cast.ToString(getEnvOrReturnDefaultValue("PostgresUser", "postgres"))
 	cfg.PoolMaxConnections = cast.ToInt(getEnvOrReturnDefaultValue("PoolMaxConnections", 60))
+
+	cfg.DockerPostgresContainerName = cast.ToString(getEnvOrReturnDefaultValue("DockerPostgresContainerName", "clinic"))
 
 	cfg.AccessTokenExpiryHour = cast.ToInt(getEnvOrReturnDefaultValue("AccessTokenExpiryHour", 0.25))
 	cfg.RefreshTokenExpiryHour = cast.ToInt(getEnvOrReturnDefaultValue("RefreshTokenExpiryHour", 24))

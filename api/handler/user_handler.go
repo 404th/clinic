@@ -12,6 +12,18 @@ import (
 	"github.com/google/uuid"
 )
 
+// Create User
+// @ID				create_user
+// @Router			/user [POST]
+// @Summary			create user
+// @Description		create user
+// @Tags			user
+// @Accept			json
+// @Produce			json
+// @Param			data	body		model.CreateUserRequest						true	"data"
+// @Success			200		{object}	model.SuccessResponse{data=model.IDTracker}			"body"
+// @Response		400		{object}	model.ErrorResponse{message=string}					"Invalid Argument"
+// @Failure			500		{object}	model.ErrorResponse{message=string}					"Server Error"
 func (h *Handler) CreateUser(c *gin.Context) {
 	var data model.CreateUserRequest
 
@@ -57,6 +69,18 @@ func (h *Handler) CreateUser(c *gin.Context) {
 	})
 }
 
+// Login
+// @ID				login
+// @Router			/login [POST]
+// @Summary			login
+// @Description		login
+// @Tags			user
+// @Accept			json
+// @Produce			json
+// @Param			data	body		model.LoginRequest							true	"data"
+// @Success			200		{object}	model.SuccessResponse{data=model.LoginResponse}		"body"
+// @Response		400		{object}	model.ErrorResponse{message=string}					"Invalid Argument"
+// @Failure			500		{object}	model.ErrorResponse{message=string}					"Server Error"
 func (h *Handler) Login(c *gin.Context) {
 	var data model.LoginRequest
 
@@ -125,6 +149,18 @@ func (h *Handler) Login(c *gin.Context) {
 	})
 }
 
+// GetUserByID
+// @ID				get_user_by_id
+// @Router			/user/{id} [GET]
+// @Summary			get_user_by_id
+// @Description		get_user_by_id
+// @Tags			user
+// @Accept			json
+// @Produce			json
+// @Param			id		path		string										true	"id"
+// @Success			200		{object}	model.SuccessResponse{data=model.User}				"user"
+// @Response		400		{object}	model.ErrorResponse{message=string}					"Invalid Argument"
+// @Failure			500		{object}	model.ErrorResponse{message=string}					"Server Error"
 func (h *Handler) GetUserByID(c *gin.Context) {
 	id := c.Param("id")
 
@@ -153,6 +189,19 @@ func (h *Handler) GetUserByID(c *gin.Context) {
 	})
 }
 
+// TransferMoney
+// @ID				transfer
+// @Security		ApiKeyAuth
+// @Router			/user/transfer [PUT]
+// @Summary			transfer
+// @Description		transfer
+// @Tags			user
+// @Accept			json
+// @Produce			json
+// @Param			data	body		model.TransferMoneyRequest					true	"data"
+// @Success			200		{object}	model.SuccessResponse{data=model.IDTracker}	"body"
+// @Response		400		{object}	model.ErrorResponse{message=string}					"Invalid Argument"
+// @Failure			500		{object}	model.ErrorResponse{message=string}					"Server Error"
 func (h *Handler) TransferMoney(c *gin.Context) {
 	var data model.TransferMoneyRequest
 	if err := c.ShouldBindJSON(&data); err != nil {
@@ -195,6 +244,19 @@ func (h *Handler) TransferMoney(c *gin.Context) {
 	})
 }
 
+// RefreshToken
+// @ID				refresh-token
+// @Security		ApiKeyAuth
+// @Router			/refresh-token [PUT]
+// @Summary			refresh-token
+// @Description		refresh-token
+// @Tags			user
+// @Accept			json
+// @Produce			json
+// @Param			data	body		model.RefreshTokenRequest					true		"data"
+// @Success			200		{object}	model.SuccessResponse{data=model.RefreshTokenResponse}	"body"
+// @Response		400		{object}	model.ErrorResponse{message=string}						"Invalid Argument"
+// @Failure			500		{object}	model.ErrorResponse{message=string}						"Server Error"
 func (h *Handler) RefreshToken(c *gin.Context) {
 	var request model.RefreshTokenRequest
 

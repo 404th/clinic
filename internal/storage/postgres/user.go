@@ -21,8 +21,6 @@ func NewUser(db *pgxpool.Pool) storage.UserI {
 	return &user{db}
 }
 
-var users_table_name string = "users"
-
 func (o *user) CreateUser(ctx context.Context, req *model.CreateUserRequest) (resp *model.IDTracker, err error) {
 	resp = &model.IDTracker{}
 

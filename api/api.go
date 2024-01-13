@@ -1,14 +1,31 @@
 package api
 
 import (
+	_ "github.com/404th/clinic/api/docs"
 	"github.com/404th/clinic/api/handler"
 	"github.com/404th/clinic/api/middleware"
 	"github.com/404th/clinic/config"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
+// SetUpRouter godoc
+// @description				This is a api gateway for clinic
+// @securityDefinitions.apikey	ApiKeyAuth
+// @in							header
+// @name						Authorization
 func Run(cfg *config.Config, h *handler.Handler) *gin.Engine {
 	r := gin.Default()
+
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
+	config.AllowCredentials = true
+	config.AllowHeaders = append(config.AllowHeaders, "*")
+
+	r.Use(cors.New(config))
+	r.Use(MaxAllowed(100))
 
 	r.POST("/user", h.CreateUser)
 	r.POST("/role", h.CreateRole)
@@ -30,9 +47,23 @@ func Run(cfg *config.Config, h *handler.Handler) *gin.Engine {
 	queue := r.Group("/queue", middleware.JwtAuthMiddleware(cfg.AccessTokenSecret))
 	{
 		queue.POST("/", h.CreateQueue)
-		queue.GET("/:id")
 		queue.PATCH("/", h.MakePurchase)
 	}
 
+	// swagger
+	url := ginSwagger.URL("/swagger/doc.json") // The url pointing to API definition
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
+
 	return r
+}
+
+func MaxAllowed(n int) gin.HandlerFunc {
+	sem := make(chan struct{}, n)
+	acquire := func() { sem <- struct{}{} }
+	release := func() { <-sem }
+	return func(c *gin.Context) {
+		acquire()       // before request
+		defer release() // after request
+		c.Next()
+	}
 }
