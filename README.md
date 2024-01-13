@@ -46,7 +46,14 @@ make createdb
 ```
 Now, we successfully run container and created database =)
 
-Next, we have to run migration to create tables in postgresql:
+Next, we have to run migration to create tables in postgresql.
+
+If you have not installed golang-migration yet, install [golang-migrate](https://github.com/golang-migrate/migrate) using command below:
+```
+brew install golang-migrate
+```
+
+Running migration up:
 ```
 make migration-up
 ```
