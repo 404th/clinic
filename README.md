@@ -25,6 +25,10 @@ Install packages:
 ```
 go mod tidy
 ```
+Install swaggo:
+```
+go get -u github.com/swaggo/swag 
+```
 
 Then, database should be created in docker container. To build db in container built-in commands are written in Makefile. We should run the command step-by-step:
 
