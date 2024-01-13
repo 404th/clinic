@@ -58,18 +58,21 @@ func (q *queue) MakePurchase(ctx context.Context, req *model.MakePurchaseRequest
 		FROM queues 
 		WHERE 
 			users.deleted_at IS NULL AND 
-			wallet > $1 AND 
+			queues.deleted_at IS NULL AND 
+			wallet >= $1 AND 
 			queues.id = $2 AND 
 			queues.customer_id = users.id AND 
-			payment_status = 0
+			payment_status = 0 
 	`
 
 	r1, err := tx.Exec(ctx, q1, req.Amount, req.QueueID)
 	if err != nil {
+		fmt.Println(":::: 1")
 		return resp, err
 	}
 	if r1.RowsAffected() <= 0 {
 		_ = tx.Rollback(ctx)
+		fmt.Println(":::: 2")
 		return resp, errors.New("payment not accepted")
 	}
 
@@ -79,7 +82,7 @@ func (q *queue) MakePurchase(ctx context.Context, req *model.MakePurchaseRequest
 		FROM queues 
 		WHERE 
 			queues.recipient_id = users.id AND 
-			users.deleted_at IS NULL AND
+			users.deleted_at IS NULL AND 
 			queues.deleted_at IS NULL AND 
 			queues.id = $2 AND 
 			payment_status = 0
@@ -87,17 +90,20 @@ func (q *queue) MakePurchase(ctx context.Context, req *model.MakePurchaseRequest
 
 	r2, err := tx.Exec(ctx, q2, req.Amount, req.QueueID)
 	if err != nil {
+		fmt.Println(":::: 3")
 		return resp, err
 	}
 	if r2.RowsAffected() <= 0 {
 		_ = tx.Rollback(ctx)
+		fmt.Println(":::: 4")
 		return resp, errors.New("payment not accepted")
 	}
 
 	q3 := `
 		UPDATE queues  
 		SET paid_money = paid_money + $1
-		WHERE queues.deleted_at IS NULL AND queues.id = $2 AND 
+		WHERE queues.deleted_at IS NULL AND 
+		queues.id = $2 AND 
 		payment_status = 0
 	`
 
@@ -107,6 +113,7 @@ func (q *queue) MakePurchase(ctx context.Context, req *model.MakePurchaseRequest
 	}
 	if r3.RowsAffected() <= 0 {
 		_ = tx.Rollback(ctx)
+		fmt.Println(":::: 5")
 		return resp, errors.New("payment not accepted")
 	}
 
@@ -129,7 +136,7 @@ func (q *queue) MakePurchase(ctx context.Context, req *model.MakePurchaseRequest
 			FROM queues
 			JOIN users ON users.id = queues.recipient_id
 			JOIN roles ON roles.id = users.role_id
-			WHERE queues.paid_money >= roles.price
+			WHERE queues.deleted_at IS NULL AND users.deleted_at IS NULL 
 			GROUP BY queues.recipient_id, roles.price
 		) AS subquery
 		WHERE 
@@ -141,10 +148,12 @@ func (q *queue) MakePurchase(ctx context.Context, req *model.MakePurchaseRequest
 
 	r4, err := tx.Exec(ctx, q4, req.QueueID)
 	if err != nil {
+		fmt.Println(":::: 7")
 		return resp, err
 	}
 	if r4.RowsAffected() <= 0 {
 		_ = tx.Rollback(ctx)
+		fmt.Println(":::: 8")
 		return resp, errors.New("payment not accepted")
 	}
 
@@ -152,6 +161,7 @@ func (q *queue) MakePurchase(ctx context.Context, req *model.MakePurchaseRequest
 
 	if err = tx.Commit(ctx); err != nil {
 		_ = tx.Rollback(ctx)
+		fmt.Println(":::: 9")
 		return resp, err
 	}
 
