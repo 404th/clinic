@@ -11,7 +11,7 @@ Prerequisite:
 ## Running application after cloning it.
 
 ```sh
-git clone https://github.com/404th/clinic.git
+git clone git@github.com:404th/clinic.git
 ```
 
 After cloning, global environment file ```.env``` must be created and example environments from ```.env.example``` are copied and pasted to ```.env```
