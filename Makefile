@@ -8,10 +8,10 @@ TAG=latest
 ENV_TAG=latest
 
 createdb:
-	docker exec -it ${DockerPostgresContainerName} createdb --password --username=${PostgresUser} --owner=${PostgresUser} ${PostgresDBName}
+	docker exec -it ${DockerPostgresContainerName} createdb --username=${PostgresUser} --owner=${PostgresUser} ${PostgresDBName}
 
 dropdb:
-	docker exec -it ${DockerPostgresContainerName} dropdb ${PostgresDBName}
+	docker exec -it ${DockerPostgresContainerName} dropdb --username=${PostgresUser} ${PostgresDBName}
 
 psqlcontainer:
 	docker run --name ${DockerPostgresContainerName} -d -p ${PostgresPort}:5432 -e POSTGRES_PASSWORD=${PostgresPassword} --env-file .env postgres:15-alpine3.16
